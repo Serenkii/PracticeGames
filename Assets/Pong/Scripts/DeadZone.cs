@@ -9,7 +9,7 @@ public class DeadZone : MonoBehaviour
     Player opponent;
 
     [SerializeField]
-    GameObject ballPrefab;
+    Ball ball;
 
     void Start()
     {
@@ -25,8 +25,9 @@ public class DeadZone : MonoBehaviour
     private void OnTriggerExit2D(Collider2D collision)
     {
         opponent.addPoint();
-        Destroy(collision.gameObject);
-        Instantiate(ballPrefab, Vector2.zero, Quaternion.identity);
+        
+
+        ball.newRandomAttributes();
     }
 
 }
