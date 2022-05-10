@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour
     public const float MAX_Y = 3.75f;
 
     [SerializeField]
-    float speed = 5f;
+    float speed = 500f;
 
     [SerializeField]
     KeyCode upKey;
@@ -52,6 +52,6 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         //rb.AddForce(new Vector2(0, speed * yVelocity), ForceMode2D.Impulse);
-        rb.velocity = new Vector2(0, speed * yVelocity);
+        rb.velocity = new Vector2(0, speed * yVelocity * Time.fixedDeltaTime);
     }
 }
