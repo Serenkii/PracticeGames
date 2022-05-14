@@ -1,12 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using TMPro;
 
 public class Player : MonoBehaviour
 {
     [SerializeField]
-    private string playerName = "Player";
+    private string playerName;
+
+    [SerializeField]
+    private TMP_Text scoreDisplay;
+    [SerializeField]
+    private TMP_Text nameDisplay;
 
     public int Points { get; private set; }
 
@@ -14,14 +19,26 @@ public class Player : MonoBehaviour
     public void addPoint()
     {
         Points++;
-        Debug.Log("Added point, now has " + Points + " points.");
+        UpdateScoreUI();
     }
 
+    public void UpdateScoreUI()
+    {
+        scoreDisplay.text = Points.ToString();
+    }
+
+
+    private void Awake()
+    {
+        playerName = gameObject.name;
+        Debug.Log(playerName);
+    }
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        nameDisplay.text = playerName;
+        Debug.Log("Start was called");
     }
 
     // Update is called once per frame

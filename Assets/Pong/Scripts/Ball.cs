@@ -16,10 +16,8 @@ public class Ball : MonoBehaviour
 
     [SerializeField]
     private float maxBounceAngle = 45f;
-    [SerializeField]
-    private float movingWallHeight = 2.5f;              //(collision.gameObject.transform.localScale.y* 0.5f)
-
-    private bool beginningMode = true;
+   
+    private bool beginningMode;
 
     private Rigidbody2D rb;
 
@@ -29,8 +27,10 @@ public class Ball : MonoBehaviour
         rb.gravityScale = 0f;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
-        
+        beginningMode = true;
     }
+
+
 
     void Start()
     {
@@ -47,14 +47,14 @@ public class Ball : MonoBehaviour
 
     void setRandomStartingVelocity()
     {
-        float randomY = Random.Range(0.1f, 1f);
+        float randomY = Random.Range(0.1f, Mathf.Tan(maxBounceAngle));
         if (Random.value < 0.5f)
             randomY = -randomY;
-        float randomX = Random.Range(0.1f, 2f);
+        float x = 1;
         if (Random.value < 0.5f)
-            randomX = -randomX;
-        
-        rb.velocity = new Vector2(randomX, randomY).normalized * initialSpeed;     
+            x = -x;
+
+        rb.velocity = new Vector2(x, randomY).normalized * initialSpeed;     
     }
 
     void setRandomStartingPosition()
@@ -70,12 +70,43 @@ public class Ball : MonoBehaviour
             return;
         }
 
-
-        if ((rb.velocity.sqrMagnitude < gameSpeed * gameSpeed - 0.01f || rb.velocity.sqrMagnitude > gameSpeed * gameSpeed + 0.01f) && !beginningMode)
-        {
-            rb.velocity = rb.velocity.normalized * gameSpeed;
+        if (beginningMode)
             return;
+
+        if (! Mathf.Approximately(rb.velocity.sqrMagnitude, gameSpeed * gameSpeed))
+        {
+
+            rb.velocity = rb.velocity.normalized * gameSpeed;
         }
+        
+        if (Mathf.Abs(calculateVelocityAngle()) * Mathf.Rad2Deg > maxBounceAngle)
+        {
+            CorrectVelocity();
+        }
+        
+    }
+
+    //fix
+    private void CorrectVelocity()
+    {
+        float y = Mathf.Tan(Mathf.Deg2Rad * maxBounceAngle);
+        
+        if (rb.velocity.y < 0)
+        {
+            y = -y;
+        }
+        rb.velocity = new Vector2(Mathf.Abs(rb.velocity.x) / rb.velocity.x, y).normalized * gameSpeed;
+    }                              //either 1 or -1
+
+    /// <summary>
+    /// Calculates the angle of the velocity of the ball to either <code>Vector2.left</code> or <code>Vector2.right</code>
+    /// 
+    /// </summary>
+    /// <returns>The signed angle. The angle is positive when the ball is travelling in positive x and positve y or in negative x and negative y direction. 
+    /// Otherwise the angle is negative.</returns>
+    private float calculateVelocityAngle()
+    {
+        return Mathf.Atan(rb.velocity.y / rb.velocity.x);
     }
 
     private bool OutOfBound()
@@ -87,29 +118,32 @@ public class Ball : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        //custom reflection only with the moving walls on the left and right
         if (!(collision.gameObject.CompareTag("MovingWall")))
             return;
 
         beginningMode = false;
 
-        if (Mathf.Abs(collision.gameObject.transform.position.x) + (collision.gameObject.transform.localScale.x * 0.5) + 0.05
+
+        if (Mathf.Abs(collision.transform.position.x) + (Util.getMovingWallWidth() * 0.5)
             < Mathf.Abs(this.gameObject.transform.position.x))          //if ball is already behind front of moving wall
         {
             float temp = 1f;
             if (collision.gameObject.name == "WallLeft")
                 temp = -1f;
-            this.rb.velocity = new Vector2(temp * gameSpeed, 0f);
+            this.rb.velocity = new Vector2(temp * gameSpeed, 0f);       //Make the ball fly off the map in a straight line
             return;
         }
 
 
         float distanceToWallCenter = this.gameObject.transform.position.y - collision.transform.position.y;
 
+        //calculate angle of return depending on distance to middle of wall
         float yValue = Mathf.Tan(Mathf.Deg2Rad * maxBounceAngle * 
-            (distanceToWallCenter / ((movingWallHeight + this.gameObject.transform.localScale.y) * 0.5f)));
-
-        Vector2 velocityDirection = Vector2.left;
-        if (collision.gameObject.name == "WallLeft")
+            (distanceToWallCenter / ((Util.getMovingWallHeight() + this.gameObject.transform.localScale.y) * 0.5f)));
+                                                                                //height of ball
+        Vector2 velocityDirection = Vector2.left;       //if right wall was hit
+        if (collision.gameObject.name == "WallLeft")    //if left wall was hit
             velocityDirection = Vector2.right;
         
         velocityDirection.y = yValue;
